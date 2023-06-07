@@ -6,75 +6,60 @@ import 'package:demoncore_engine/demoncore_engine.dart';
 part './asset_man.dart';
 
 final EndgameAssetManager assetManager = EndgameAssetManager();
-final DemoncoreEngine demoncore = DemoncoreEngine(
-  assetManager: assetManager,
-);
 
-void main() {
-  runApp(const Endgame());
+class House extends MapComponent {
+  @override
+  List<SpriteBlueprint> createBlueprints() {
+    final List<SpriteBlueprint> layers = [];
+    for (int i = 0; i < 20; i++) {
+      for (int j = 0; j < 40; j++) {
+        layers.add(
+          StaticTileSprite(
+            assetImage: assetManager.groundImg,
+            position: RelativeTilePosition(i, j),
+          ),
+        );
+        if (i == 20 || i == 0 || j == 0 || j == 20) {
+          layers.add(
+            StaticTileSprite(
+              assetImage: assetManager.wallImg,
+              position: RelativeTilePosition(i, j),
+            ),
+          );
+        }
+      }
+    }
+    return layers;
+  }
 }
 
-class Endgame extends StatelessWidget {
-  const Endgame({super.key});
-
-  static final GlobalKey asKey = GlobalKey();
-  static final Map<TilePosition, GlobalKey> sgkeys = {};
-  static final Map<TilePosition, GlobalKey> egkeys = {};
-
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    final GameCanvas gameCanvas = GameCanvas(
-      tileSize: 40,
-      stepSize: 20,
-      backgroundColor: Colors.blue.shade900,
-      gameMapBuilder: GameMapBuilder(
-        buildMap: (GameCanvas gameCanvas) {
-          return GameMap(
-            gameCanvas: gameCanvas,
-            rows: 20,
-            cols: 20,
-            activeSprite: ExtrudedControllableSprite(
-              key: asKey,
-              baseImage: assetManager.dinoImg,
-              width: 2 * 40,
-              height: 3 * 40,
-              gameCanvas: gameCanvas,
-            ),
-            tileSpriteGenerator: (TilePosition tilePosition) {
-              if ((tilePosition.colNum > 5 && tilePosition.colNum < 15) ||
-                  (tilePosition.rowNum > 5 && tilePosition.rowNum < 15)) {
-                return StaticTileSprite(
-                  key: sgkeys.putIfAbsent(tilePosition, () => GlobalKey()),
-                  tilePosition: tilePosition,
-                  baseImage: assetManager.groundImg,
-                  gameCanvas: gameCanvas,
-                );
-              } else {
-                if (tilePosition.colNum == 5 && tilePosition.rowNum < 5) {
-                  return ExtrudedStaticTileSprite(
-                    key: egkeys.putIfAbsent(tilePosition, () => GlobalKey()),
-                    tilePosition: tilePosition,
-                    baseImage: assetManager.wallImg,
-                    gameCanvas: gameCanvas,
-                  );
-                } else {
-                  return StaticTileSprite(
-                    key: sgkeys.putIfAbsent(tilePosition, () => GlobalKey()),
-                    tilePosition: tilePosition,
-                    baseImage: assetManager.nullImg,
-                    gameCanvas: gameCanvas,
-                  );
-                }
-              }
-            },
-          );
-        },
-      ),
-    );
-    return MaterialApp(
+void main() {
+  runApp(
+    DemoncoreEngine(
       title: 'Endgame',
-      home: gameCanvas,
-    );
-  }
+      assetManager: assetManager,
+      debugConfigs: const DebugConfigs(
+        showSpriteBounds: true,
+      ),
+      initialGameView: 'games/dino',
+      gameViews: {
+        'games/dino': (BuildContext buildContext) {
+          return GameCanvas(
+            tileSize: 40,
+            stepSize: 40,
+            backgroundColor: Colors.blue.shade900,
+            gameMapBuilder: GameMapBuilder(
+              map: House(),
+              controllableSprite: ExtrudedControllableSprite(
+                position: RelativeTilePosition(15, 15),
+                assetImage: assetManager.dinoImg,
+                width: 2 * 40,
+                height: 3 * 40,
+              ),
+            ),
+          );
+        }
+      },
+    ),
+  );
 }
